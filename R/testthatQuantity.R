@@ -23,3 +23,88 @@ testthatQuantity <- function(test.name, code){
   time.df <- data.frame(test.name, seconds)
   test.results[[test.name]] <<- time.df
 }
+
+## get all commits involving test-animation.R
+## thocking@silene:~/R/animint(testthatQuantity)$ git log --pretty=oneline --all tests/testthat/test-animation.R
+## 54bb56b1d18c0370b03a41fce59c3a76a130f055 two test files
+## 0b5415c91f6c14927138c6cd1c821e5d31cce1f2 testthat tests
+
+## get all commits
+## thocking@silene:~/R/animint(testthatQuantity)$ git log --pretty=oneline --all
+
+## Parse the first occurance of pattern from each of several strings
+## using (named) capturing regular expressions, returning a matrix
+## (with column names).
+str_match_perl <- function(string,pattern){
+  stopifnot(is.character(string))
+  stopifnot(is.character(pattern))
+  stopifnot(length(pattern)==1)
+  parsed <- regexpr(pattern,string,perl=TRUE)
+  captured.text <- substr(string,parsed,parsed+attr(parsed,"match.length")-1)
+  captured.text[captured.text==""] <- NA
+  captured.groups <- if(is.null(attr(parsed, "capture.start"))){
+    NULL
+  }else{
+    do.call(rbind,lapply(seq_along(string),function(i){
+      st <- attr(parsed,"capture.start")[i,]
+      if(is.na(parsed[i]) || parsed[i]==-1)return(rep(NA,length(st)))
+      substring(string[i],st,st+attr(parsed,"capture.length")[i,]-1)
+    }))
+  }
+  result <- cbind(captured.text,captured.groups)
+  colnames(result) <- c("",attr(parsed,"capture.names"))
+  result
+}
+
+read.commits <- function(txt){
+  data.frame(SHA1=m[,"SHA1"], message=m[,"message"])
+}
+
+firstCommit <- function(file){
+  cmd <- paste("git log --pretty=oneline --all", file)
+  txt <- system(cmd, intern=TRUE)
+  last.line <- txt[length(txt)]
+  pattern <-
+    paste0("(?<SHA1>[0-9a-f]{40})",
+           " ",
+           "(?<message>.*)")
+  m <- str_match_perl(last.line, pattern)
+  m[,"SHA1"]
+}
+
+##toplevel <- system("git rev-parse --show-toplevel", intern=TRUE)
+
+cmd <- "git log --pretty=format:'%H %ci %s' --all"
+git.txt <- system(cmd, intern=TRUE)
+pattern <-
+  paste0("(?<SHA1>[0-9a-f]{40})",
+         " ",
+         "(?<datetime>",
+         "(?<year>[0-9]{4})",
+         "-",
+         "(?<month>[0-9]{2})",
+         "-",
+         "(?<day>[0-9]{2})",
+         " ",
+         "(?<hour>[0-9]{2})",
+         ":",
+         "(?<minute>[0-9]{2})",
+         ":",
+         "(?<second>[0-9]{2})",
+         ")",
+         " ",
+         "(?<gmt_offset_sign>[-+])",
+         "(?<gmt_offset_hours>[0-9]{2})",
+         "(?<gmt_offset_minutes>[0-9]{2})",
+         " ",
+         "(?<subject>.*)")
+m <- str_match_perl(git.txt, pattern)
+commit.time <- strptime(m[,"datetime"], "%Y-%m-%d %H:%M:%S", "GMT") + 0
+gmt.offset.sign <- ifelse(m[,"gmt_offset_sign"]=="+", 1, -1)
+gmt.offset.hours <- as.numeric(m[,"gmt_offset_hours"])
+minutes.only <- as.numeric(m[,"gmt_offset_minutes"])
+gmt.offset.minutes <- minutes.only + gmt.offset.hours * 60
+gmt.offset.seconds <- gmt.offset.minutes * 60
+gmt.offset <- gmt.offset.sign * gmt.offset.seconds
+gmt.time <- commit.time - gmt.offset
+

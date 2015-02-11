@@ -1,0 +1,6 @@
+Record times for unit tests
+
+This is a proof-of-concept package for making plots of code execution
+time versus GitHub commit. The idea is that a developer can look at
+such a plot of quantitative data and do a qualitative visual test to
+determine if the code is getting slower or faster.
