@@ -98,7 +98,7 @@ print.commits <- function(commits){
   print(as.data.frame(commits)[, c("gmt.time", "abbrev")])
 }
 
-test.file <- function(tfile){
+commits.for.file <- function(tfile){
   testthat.dir <- dirname(tfile)
   old.wd <- setwd(testthat.dir)
   on.exit(setwd(old.wd))
@@ -114,4 +114,26 @@ test.file <- function(tfile){
   first.i <- which(first.commit$SHA1 == all.commits$SHA1)
   commits.to.test <- all.commits[1:first.i, ]
   commits.to.test
+}
+
+### Starting from any directory, go to tfile directory and then
+### checkout a commit and test it.
+test.commit <- function(tfile, SHA1){
+  testthat.dir <- dirname(tfile)
+  tfile.base <- basename(tfile)
+  old.wd <- setwd(testthat.dir)
+  on.exit(setwd(old.wd))
+  old.SHA1 <- system("git rev-parse HEAD", intern=TRUE)
+  on.exit({
+    system(paste("git checkout", old.SHA1))
+    setwd(old.wd)
+  })
+  cmd <- paste("git checkout", SHA1)
+  system(cmd)
+  test.file(tfile.base)
+}
+
+### Starting from the test file directory, run tests in file.
+test.file <- function(tfile){
+  source(tfile)
 }
