@@ -24,14 +24,6 @@ testthatQuantity <- function(test.name, code){
   test.results[[test.name]] <<- time.df
 }
 
-## get all commits involving test-animation.R
-## thocking@silene:~/R/animint(testthatQuantity)$ git log --pretty=oneline --all tests/testthat/test-animation.R
-## 54bb56b1d18c0370b03a41fce59c3a76a130f055 two test files
-## 0b5415c91f6c14927138c6cd1c821e5d31cce1f2 testthat tests
-
-## get all commits
-## thocking@silene:~/R/animint(testthatQuantity)$ git log --pretty=oneline --all
-
 ## Parse the first occurance of pattern from each of several strings
 ## using (named) capturing regular expressions, returning a matrix
 ## (with column names).
@@ -98,6 +90,7 @@ commits <- function(git.lines){
                         stringsAsFactors = FALSE)
   rownames(commits) <- commits$SHA1
   class(commits) <- c("commits", "data.frame")
+  stopifnot(nrow(commits) == length(git.lines))
   commits
 }
 
