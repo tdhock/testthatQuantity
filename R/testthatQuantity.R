@@ -91,8 +91,11 @@ commits <- function(git.lines){
   gmt.offset.seconds <- gmt.offset.minutes * 60
   gmt.offset <- gmt.offset.sign * gmt.offset.seconds
   gmt.time <- commit.time - gmt.offset
-  abbrev <- substr(m[, "subject"], 1, 18)
-  commits <- data.frame(m[,c("SHA1", "subject")], abbrev, gmt.time)
+  subject <- m[, "subject"]
+  SHA1 <- m[, "SHA1"]
+  abbrev <- substr(subject, 1, 18)
+  commits <- data.frame(SHA1, subject, abbrev, gmt.time,
+                        stringsAsFactors = FALSE)
   rownames(commits) <- commits$SHA1
   class(commits) <- c("commits", "data.frame")
   commits
@@ -110,11 +113,12 @@ test.file <- function(tfile){
   all.cmd <- "git log --pretty=format:'%H %ci %s' --all"
   all.txt <- system(all.cmd, intern=TRUE)
   all.commits <- commits(all.txt)
-  return(all.commits)
   ## Then get commits just involving this file.
   file.cmd <- paste(all.cmd, tfile)
   file.txt <- system(file.cmd, intern=TRUE)
   last.line <- file.txt[length(file.txt)]
-  last.m <- str_match_perl(last.line, pattern)
-  m[,"SHA1"]
+  first.commit <- commits(last.line)
+  first.i <- which(first.commit$SHA1 == all.commits$SHA1)
+  commits.to.test <- all.commits[1:first.i, ]
+  commits.to.test
 }
