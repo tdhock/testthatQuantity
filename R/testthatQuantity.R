@@ -56,27 +56,7 @@ str_match_perl <- function(string,pattern){
   result
 }
 
-read.commits <- function(txt){
-  data.frame(SHA1=m[,"SHA1"], message=m[,"message"])
-}
-
-firstCommit <- function(file){
-  cmd <- paste("git log --pretty=oneline --all", file)
-  txt <- system(cmd, intern=TRUE)
-  last.line <- txt[length(txt)]
-  pattern <-
-    paste0("(?<SHA1>[0-9a-f]{40})",
-           " ",
-           "(?<message>.*)")
-  m <- str_match_perl(last.line, pattern)
-  m[,"SHA1"]
-}
-
-##toplevel <- system("git rev-parse --show-toplevel", intern=TRUE)
-
-cmd <- "git log --pretty=format:'%H %ci %s' --all"
-git.txt <- system(cmd, intern=TRUE)
-pattern <-
+commit.line.pattern <-
   paste0("(?<SHA1>[0-9a-f]{40})",
          " ",
          "(?<datetime>",
@@ -98,13 +78,43 @@ pattern <-
          "(?<gmt_offset_minutes>[0-9]{2})",
          " ",
          "(?<subject>.*)")
-m <- str_match_perl(git.txt, pattern)
-commit.time <- strptime(m[,"datetime"], "%Y-%m-%d %H:%M:%S", "GMT") + 0
-gmt.offset.sign <- ifelse(m[,"gmt_offset_sign"]=="+", 1, -1)
-gmt.offset.hours <- as.numeric(m[,"gmt_offset_hours"])
-minutes.only <- as.numeric(m[,"gmt_offset_minutes"])
-gmt.offset.minutes <- minutes.only + gmt.offset.hours * 60
-gmt.offset.seconds <- gmt.offset.minutes * 60
-gmt.offset <- gmt.offset.sign * gmt.offset.seconds
-gmt.time <- commit.time - gmt.offset
 
+commits <- function(git.lines){
+  stopifnot(is.character(git.lines))
+  m <- str_match_perl(git.lines, commit.line.pattern)
+  stopifnot(!is.na(m[,1]))
+  commit.time <- strptime(m[,"datetime"], "%Y-%m-%d %H:%M:%S", "GMT") + 0
+  gmt.offset.sign <- ifelse(m[,"gmt_offset_sign"]=="+", 1, -1)
+  gmt.offset.hours <- as.numeric(m[,"gmt_offset_hours"])
+  minutes.only <- as.numeric(m[,"gmt_offset_minutes"])
+  gmt.offset.minutes <- minutes.only + gmt.offset.hours * 60
+  gmt.offset.seconds <- gmt.offset.minutes * 60
+  gmt.offset <- gmt.offset.sign * gmt.offset.seconds
+  gmt.time <- commit.time - gmt.offset
+  abbrev <- substr(m[, "subject"], 1, 18)
+  commits <- data.frame(m[,c("SHA1", "subject")], abbrev, gmt.time)
+  rownames(commits) <- commits$SHA1
+  class(commits) <- c("commits", "data.frame")
+  commits
+}
+
+print.commits <- function(commits){
+  print(as.data.frame(commits)[, c("gmt.time", "abbrev")])
+}
+
+test.file <- function(tfile){
+  testthat.dir <- dirname(tfile)
+  old.wd <- setwd(testthat.dir)
+  on.exit(setwd(old.wd))
+  ## first get data for all commits in this repos.
+  all.cmd <- "git log --pretty=format:'%H %ci %s' --all"
+  all.txt <- system(all.cmd, intern=TRUE)
+  all.commits <- commits(all.txt)
+  return(all.commits)
+  ## Then get commits just involving this file.
+  file.cmd <- paste(all.cmd, tfile)
+  file.txt <- system(file.cmd, intern=TRUE)
+  last.line <- file.txt[length(file.txt)]
+  last.m <- str_match_perl(last.line, pattern)
+  m[,"SHA1"]
+}
