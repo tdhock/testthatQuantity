@@ -22,6 +22,8 @@ str_match_perl <- function(string,pattern){
   result
 }
 
+### Named capture regular expression for parsing git log
+### --pretty=format:'%H %ci %s' vis str_match_perl.
 commit.line.pattern <-
   paste0("(?<SHA1>[0-9a-f]{40})",
          " ",
@@ -45,6 +47,7 @@ commit.line.pattern <-
          " ",
          "(?<subject>.*)")
 
+### Parse a git log character vector, returning data.frame.
 commits <- function(git.lines){
   stopifnot(is.character(git.lines))
   m <- str_match_perl(git.lines, commit.line.pattern)
@@ -68,11 +71,15 @@ commits <- function(git.lines){
   commits
 }
 
+### Print commits 80 characters per line.
 print.commits <- function(commits){
   print(as.data.frame(commits)[, c("gmt.time", "abbrev")])
 }
 
+### Get data.frame of all commits involving tfile.
 commits.for.file <- function(tfile){
+  stopifnot(is.character(tfile))
+  stopifnot(length(tfile) == 1)
   testthat.dir <- dirname(tfile)
   old.wd <- setwd(testthat.dir)
   on.exit(setwd(old.wd))
@@ -93,6 +100,10 @@ commits.for.file <- function(tfile){
 ### Starting from any directory, go to tfile directory and then
 ### checkout a commit and test it.
 test.commit <- function(tfile, SHA1){
+  stopifnot(is.character(tfile))
+  stopifnot(length(tfile) == 1)
+  stopifnot(is.character(SHA1))
+  stopifnot(length(SHA1) == 1)
   testthat.dir <- dirname(tfile)
   tfile.base <- basename(tfile)
   old.wd <- setwd(testthat.dir)
@@ -110,6 +121,13 @@ test.commit <- function(tfile, SHA1){
 
 ### Starting from the test file directory, run tests in file.
 test.file <- function(tfile, test.repetitions=3){
+  stopifnot(is.character(tfile))
+  stopifnot(length(tfile) == 1)
+  stopifnot(is.numeric(test.repetitions))
+  stopifnot(length(test.repetitions) == 1)
+  test.repetitions <- floor(test.repetitions)
+  stopifnot(is.finite(test.repetitions))
+  stopifnot(test.repetitions > 0)
   require(testthat)
   tlines <- readLines(tfile)
   qlines <- sub("test_that(", "testthatQuantity(", tlines, fixed=TRUE)
