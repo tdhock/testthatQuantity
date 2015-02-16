@@ -101,20 +101,29 @@ commits.for.file <- structure(function(tfile){
   time.list <- list()
   n.commits <- 20
   commit.rows <- round(seq(1, nrow(history), l=n.commits))
+  commit.rows <- 1:10
   for(commit.i in commit.rows){
     commit <- history[commit.i, ]
     if(! commit$SHA1 %in% names(time.list)){
       time.list[[commit$SHA1]] <- test.commit(tfile, commit$SHA1)
     }
   }
+  save(history, time.list, file="../data/animint.timings.RData")
   time.df <- do.call(rbind, time.list)
   time.df$gmt.time <- history[paste(time.df$SHA1), "gmt.time"]
+  rownames(time.df) <- NULL
+  time.df[order(time.df$gmt.time), c("SHA1", "gmt.time")]
+  last <- subset(time.df, gmt.time > ISOdatetime(2015, 2, 15, 23, 30, 0, "GMT"))
+  some <- subset(time.df, gmt.time < ISOdatetime(2015, 2, 15, 0, 0, 0, "GMT"))
+  to.show <- rbind(last, some)
   library(ggplot2)
-  with.legend <- ggplot()+
-    geom_point(aes(gmt.time, seconds, color=test.name),
-               data=time.df)
+  with.legend <- ggplot(to.show, aes(gmt.time, seconds, color=test.name))+
+    geom_point(pch=1)+
+    ggtitle("Times for two Animint tests, selected commits in 2014-2015")+
+    xlab("Time of commit (GMT)")
   library(directlabels)
   direct.label(with.legend)
+  ggsave("../Animint-two-tests.png")
 })
 
 ### Starting from any directory, go to tfile directory and then

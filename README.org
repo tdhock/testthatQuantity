@@ -4,3 +4,14 @@ This is a proof-of-concept package for making plots of code execution
 time versus GitHub commit. The idea is that a developer can look at
 such a plot of quantitative data and do a qualitative visual test to
 determine if the code is getting slower or faster.
+
+For example I used the code in [[file:R/testthatQuantity.R][testthatQuantity.R]] to run two tests in
+[[https://github.com/tdhock/animint/blob/master/tests/testthat/test-animation.R][test-animation.R]], for several GitHub commit versions of the [[https://github.com/tdhock/animint][animint]]
+package:
+
+[[file:Animint-two-tests.png]]
+
+The plot above shows that in the most recent commit, the "tornado
+animation frames correct" test has gotten a little slower. Plots such
+as this could be used to alert Animint package developers that they
+may have introduced unwanted changes that resulted in slower code.
