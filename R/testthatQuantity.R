@@ -77,7 +77,7 @@ print.commits <- function(commits){
 }
 
 ### Get data.frame of all commits involving tfile.
-commits.for.file <- function(tfile){
+commits.for.file <- structure(function(tfile){
   stopifnot(is.character(tfile))
   stopifnot(length(tfile) == 1)
   testthat.dir <- dirname(tfile)
@@ -95,7 +95,27 @@ commits.for.file <- function(tfile){
   first.i <- which(first.commit$SHA1 == all.commits$SHA1)
   commits.to.test <- all.commits[1:first.i, ]
   commits.to.test
-}
+}, ex=function(){
+  tfile <- "~/R/animint/tests/testthat/test-animation.R"
+  history <- commits.for.file(tfile)
+  time.list <- list()
+  n.commits <- 20
+  commit.rows <- round(seq(1, nrow(history), l=n.commits))
+  for(commit.i in commit.rows){
+    commit <- history[commit.i, ]
+    if(! commit$SHA1 %in% names(time.list)){
+      time.list[[commit$SHA1]] <- test.commit(tfile, commit$SHA1)
+    }
+  }
+  time.df <- do.call(rbind, time.list)
+  time.df$gmt.time <- history[paste(time.df$SHA1), "gmt.time"]
+  library(ggplot2)
+  with.legend <- ggplot()+
+    geom_point(aes(gmt.time, seconds, color=test.name),
+               data=time.df)
+  library(directlabels)
+  direct.label(with.legend)
+})
 
 ### Starting from any directory, go to tfile directory and then
 ### checkout a commit and test it.
@@ -115,7 +135,14 @@ test.commit <- function(tfile, SHA1){
   })
   cmd <- paste("git checkout", SHA1)
   system(cmd)
-  test.df <- test.file(tfile.base)
+  pkg <- file.path("..", "..")
+  test.df <- tryCatch({
+    devtools::load_all(pkg)
+    test.file(tfile.base)
+  }, error=function(e){
+    data.frame(test.name=paste(e), seconds=NA)
+  })
+
   data.frame(SHA1, test.df, row.names=NULL)
 }
 
