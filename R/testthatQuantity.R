@@ -1,29 +1,3 @@
-test.results <- list()
-test.repetitions <- 3
-
-testthatQuantity <- function(test.name, code){
-  e <- parent.frame()
-  code.subs <- substitute(code)
-  run <- function(){
-    testthat:::test_code(test.name, code.subs, env=e)
-  }
-  seconds <- if(require(microbenchmark)){
-    times <- microbenchmark(test={
-      run()
-    }, times=test.repetitions)
-    times$time/1e9
-  }else{
-    replicate(test.repetitions, {
-      time.vec <- system.time({
-        run()
-      })
-      time.vec[["elapsed"]]
-    })
-  }
-  time.df <- data.frame(test.name, seconds)
-  test.results[[test.name]] <<- time.df
-}
-
 ## Parse the first occurance of pattern from each of several strings
 ## using (named) capturing regular expressions, returning a matrix
 ## (with column names).
@@ -130,10 +104,40 @@ test.commit <- function(tfile, SHA1){
   })
   cmd <- paste("git checkout", SHA1)
   system(cmd)
-  test.file(tfile.base)
+  test.df <- test.file(tfile.base)
+  data.frame(SHA1, test.df, row.names=NULL)
 }
 
 ### Starting from the test file directory, run tests in file.
-test.file <- function(tfile){
-  source(tfile)
+test.file <- function(tfile, test.repetitions=3){
+  require(testthat)
+  tlines <- readLines(tfile)
+  qlines <- sub("test_that(", "testthatQuantity(", tlines, fixed=TRUE)
+  qfile <- tempfile()
+  writeLines(qlines, qfile)
+  test.results <- list()
+  testthatQuantity <- function(test.name, code){
+    e <- parent.frame()
+    code.subs <- substitute(code)
+    run <- function(){
+      testthat:::test_code(test.name, code.subs, env=e)
+    }
+    seconds <- if(require(microbenchmark)){
+      times <- microbenchmark(test={
+        run()
+      }, times=test.repetitions)
+      times$time/1e9
+    }else{
+      replicate(test.repetitions, {
+        time.vec <- system.time({
+          run()
+        })
+        time.vec[["elapsed"]]
+      })
+    }
+    time.df <- data.frame(test.name, seconds)
+    test.results[[test.name]] <<- time.df
+  }
+  source(qfile, local=TRUE)
+  do.call(rbind, test.results)
 }
