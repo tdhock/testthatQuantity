@@ -1,13 +1,25 @@
 library(testthatQuantity)
 
-memory.usage()
+e <- new.env()
+L <- list()
 m.size <- 10240L
-m <- matrix(5, m.size, m.size)
-print(object.size(m))
-memory.usage()
-rm(m)
-gc()
-memory.usage()
+
+fun.with.possible.memory.side.effect <- function(e.or.L){
+  e.or.L$m <- matrix(5, m.size, m.size)
+}
+
+doTest <- function(e.or.L){
+  e.or.L$m <- NULL
+  gc()
+  print(memory.usage())
+  fun.with.possible.memory.side.effect(e.or.L)
+  print(memory.usage())
+  gc()
+  print(memory.usage())
+}
+
+doTest(e)
+doTest(L)
 
 .C("leak_matrix",
    m.size,
