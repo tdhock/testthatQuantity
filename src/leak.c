@@ -11,7 +11,7 @@ void leak_matrix(int *n){
       ptr[i + (*n) * j] = i * j;
     }
   }
-  printf("leaked %d bytes at %p\\n", bytes, ptr);
+  printf("leaked %d bytes at %p\n", bytes, ptr);
 }
 
 void free_matrix(int *n){
@@ -23,5 +23,5 @@ void free_matrix(int *n){
     }
   }
   free(ptr);
-  printf("freed %d bytes at %p\\n", bytes, ptr);
+  printf("freed %d bytes at %p\n", bytes, ptr);
 }
