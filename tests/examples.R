@@ -23,10 +23,15 @@ doTest <- function(e.or.L){
 doTest(e) #800
 doTest(L) #0
 
+## Careful: the following function leaks 800MB of RAM (which are not
+## recoverable until you quit R)!
 .C("leak_matrix",
    m.size,
    PACKAGE="testthatQuantity")
 
+## The following function does not leak memory, but it still would be
+## nice to be able to quantify the fact that it uses a maximum of
+## 800MB of RAM during the course of its execution.
 .C("free_matrix",
    m.size,
    PACKAGE="testthatQuantity")
