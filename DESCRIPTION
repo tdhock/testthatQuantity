@@ -1,0 +1,8 @@
+Package: testthatQuantity
+Maintainer: Toby Dylan Hocking <toby.hocking@mail.mcgill.ca>
+Author: Toby Dylan Hocking
+Version: 2015.06.12
+License: GPL-3
+Title: Test that quantity
+Description: Functions for testing time, memory, etc.
+Depends: R (>= 2.10)

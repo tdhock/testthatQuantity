@@ -1,7 +1,5 @@
-Record times for unit tests
-
-This is a proof-of-concept package for making plots of code execution
-time versus GitHub commit. The idea is that a developer can look at
+This is a proof-of-concept package for making plots of time and memory
+usage versus GitHub commit. The idea is that a developer can look at
 such a plot of quantitative data and do a qualitative visual test to
 determine if the code is getting slower or faster.
 
@@ -15,3 +13,36 @@ The plot above shows that in the most recent commit, the "tornado
 animation frames correct" test has gotten a little slower. Plots such
 as this could be used to alert Animint package developers that they
 may have introduced unwanted changes that resulted in slower code.
+
+** Memory usage testing
+
+In my experience in R package development, there are two kinds of
+memory problems. See [[file:tests/examples.R]]
+
+*** Leaks: un-freed memory
+
+When developing R packages with low-level (C/C++/FORTRAN) code, it is
+possible to introduce a memory leak if you call =malloc= to allocate
+memory without calling =free= later to release that memory for other
+uses.
+
+It would be useful to be able to quantify the amount of memory leaked
+by arbitrary pieces of R code.
+
+*** Swapping: maximum memory usage
+
+Say you are working with big data that fits into memory, but
+barely. Some operations that you do may require more memory than you
+have. When R wants to use more memory than is available on the system,
+it starts swapping. This brings the system completely to a halt for a
+few minutes while the kernel copies from memory to disk. 
+
+To avoid such problems it is important to write code that has a small
+maximum memory usage. Say we have one version of a function =fun1=
+which uses a maximum of 1MB of memory at some time in its execution,
+and there is another function =fun2= which does the exact same thing,
+but uses 2MB of memory. Which would you rather use?  Of course =fun1=
+is preferable since it uses less memory.
+
+Thus it would be useful to be able to quantify the maxmimum memory
+usage in practice of arbitrary bits of R code.
