@@ -20,7 +20,13 @@ doTest <- function(e.or.L){
   after$megabytes - before$megabytes
 }
 
+## The first time you execute the following line of code, the memory
+## usage of your R process should go up by 800MB.
 doTest(e) #800
+
+## Executing the following line of code should cause a brief 800MB
+## spike in the memory usage, after which memory usage returns to what
+## it was before calling it.
 doTest(L) #0
 
 ## Careful: the following function leaks 800MB of RAM (which are not
