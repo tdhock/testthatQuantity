@@ -11,11 +11,12 @@ fun.with.possible.memory.side.effect <- function(e.or.L){
 doTest <- function(e.or.L){
   e.or.L$m <- NULL
   gc()
-  print(memory.usage())
+  before.MB <- print(memory.usage())$megabytes
   fun.with.possible.memory.side.effect(e.or.L)
   print(memory.usage())
   gc()
-  print(memory.usage())
+  after.MB <- print(memory.usage())$megabytes
+  after.MB - before.MB
 }
 
 doTest(e)
