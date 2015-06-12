@@ -11,16 +11,17 @@ fun.with.possible.memory.side.effect <- function(e.or.L){
 doTest <- function(e.or.L){
   e.or.L$m <- NULL
   gc()
-  before.MB <- print(memory.usage())$megabytes
+  before <- memory.usage()
   fun.with.possible.memory.side.effect(e.or.L)
-  print(memory.usage())
+  during <- memory.usage()
   gc()
-  after.MB <- print(memory.usage())$megabytes
-  after.MB - before.MB
+  after <- memory.usage()
+  print(rbind(before=before, during=during, after=after))
+  after$megabytes - before$megabytes
 }
 
-doTest(e)
-doTest(L)
+doTest(e) #800
+doTest(L) #0
 
 .C("leak_matrix",
    m.size,
