@@ -42,3 +42,20 @@ doTest(L) #0
    m.size,
    PACKAGE="testthatQuantity")
 
+## example from Akash 16 June 2015.
+print(gc(reset = T))
+before <- memory.usage()
+
+##source(temp_file, local = TRUE)
+a <- matrix(5, nrow = m.size, ncol = m.size)
+
+print(gc(reset = T))
+during <- memory.usage()
+
+remove(a)
+
+print(gc(reset = T))
+after <- memory.usage()
+
+test_results <- rbind(before = before, during = during, after = after)
+test_results
