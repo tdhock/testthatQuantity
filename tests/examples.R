@@ -49,28 +49,57 @@ ggplot()+
 ## recoverable until you quit R)!
 cmd <-
   paste("bash",
-        "~/R/testthatQuantity/exec/get_pid.sh",
+        "~/R/testthatQuantity/exec/rss.sh",
         "leak_matrix.RSS",
         Sys.getpid())
-sys.out <- system(cmd, intern=TRUE, wait=FALSE)
+gc()
+system(cmd, wait=FALSE)
+Sys.sleep(1)
 Rprof("leak_matrix.Rprof", memory.profiling=TRUE)
-script <- sprintf("", 
 .C("leak_matrix",
    m.size,
    PACKAGE="testthatQuantity")
 Rprof(NULL)
-leak.Rprof <- getProf("leak_matrix.Rprof")
-ggplot()+
-  geom_line(aes(seconds, bytes/1024^2), data=leak.Rprof)
-## This plot clearly shows that we can NOT use Rprof to track memory
-## usage outside of R allocations.
+system("touch leak_matrix.RSS.DONE")
 
 ## The following function does not leak memory, but it still would be
 ## nice to be able to quantify the fact that it uses a maximum of
 ## 800MB of RAM during the course of its execution.
+cmd <-
+  paste("bash",
+        "~/R/testthatQuantity/exec/rss.sh",
+        "free_matrix.RSS",
+        Sys.getpid())
+gc()
+system(cmd, wait=FALSE)
+Sys.sleep(1)
+Rprof("free_matrix.Rprof", memory.profiling=TRUE)
 .C("free_matrix",
    m.size,
    PACKAGE="testthatQuantity")
+Rprof(NULL)
+system("touch free_matrix.RSS.DONE")
+
+## Read profiling files.
+kilobytes <- scan("leak_matrix.RSS", what=integer())
+plot(kilobytes)
+(max(kilobytes) - kilobytes[1])
+(kilobytes[length(kilobytes)]-kilobytes[1])
+kilobytes <- scan("free_matrix.RSS", what=integer())
+plot(kilobytes)
+(max(kilobytes) - kilobytes[1])
+(kilobytes[length(kilobytes)]-kilobytes[1])
+
+## These plots clearly show that we can NOT use Rprof to track memory
+## usage outside of R allocations.
+leak.Rprof <- getProf("leak_matrix.Rprof")
+ggplot()+
+  ylab("kilobytes")+
+  geom_line(aes(seconds, bytes/1024), data=leak.Rprof)
+free.Rprof <- getProf("free_matrix.Rprof")
+ggplot()+
+  ylab("kilobytes")+
+  geom_line(aes(seconds, bytes/1024), data=free.Rprof)
 
 ## example from Akash 16 June 2015.
 print(gc(reset = T))
