@@ -1,3 +1,8 @@
+DEPRECATED
+
+For a more recent implementation of performance testing R packages,
+see https://github.com/analyticalmonk/Rperform
+
 This is a proof-of-concept package for making plots of time and memory
 usage versus GitHub commit. The idea is that a developer can look at
 such a plot of quantitative data and do a qualitative visual test to
